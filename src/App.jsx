@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminLayout from "./components/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
-import Posts from "./pages/Posts";
+import Groups from "./pages/Groups";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -27,7 +27,7 @@ const App = () => (
             <Route path="/" element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="users" element={<Users />} />
-              <Route path="posts" element={<Posts />} />
+              <Route path="groups" element={<Groups />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />

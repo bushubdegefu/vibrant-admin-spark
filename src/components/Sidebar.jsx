@@ -1,13 +1,13 @@
 
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, ShieldCheck, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { title: 'Dashboard', path: '/', icon: LayoutDashboard },
   { title: 'Users', path: '/users', icon: Users },
-  { title: 'Posts', path: '/posts', icon: FileText },
+  { title: 'Groups', path: '/groups', icon: ShieldCheck },
   { title: 'Settings', path: '/settings', icon: Settings },
 ];
 
