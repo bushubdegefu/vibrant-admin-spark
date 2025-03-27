@@ -1,5 +1,5 @@
-
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Card, 
   CardContent, 
@@ -52,6 +52,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from "sonner";
 
@@ -130,6 +131,7 @@ const Users = () => {
   const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [userToDelete, setUserToDelete] = useState(null);
+  const navigate = useNavigate();
   
   const [newUser, setNewUser] = useState({
     name: '',
@@ -152,25 +154,15 @@ const Users = () => {
   };
 
   const handleAddUser = () => {
-    setEditingUser(null);
-    setNewUser({
-      name: '',
-      email: '',
-      role: 'Viewer',
-      status: 'Active',
-    });
-    setIsAddEditDialogOpen(true);
+    navigate('/users/new');
   };
 
   const handleEditUser = (user) => {
-    setEditingUser(user);
-    setNewUser({
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      status: user.status,
-    });
-    setIsAddEditDialogOpen(true);
+    navigate(`/users/${user.id}`);
+  };
+
+  const handleViewUserDetails = (user) => {
+    navigate(`/users/${user.id}`);
   };
 
   const handleDeleteClick = (user) => {
@@ -185,38 +177,6 @@ const Users = () => {
       setIsDeleteDialogOpen(false);
       setUserToDelete(null);
     }
-  };
-
-  const handleSubmitUser = () => {
-    if (editingUser) {
-      // Edit existing user
-      setUsers(users.map(user => 
-        user.id === editingUser.id 
-          ? { ...user, ...newUser } 
-          : user
-      ));
-      toast.success("User updated successfully");
-    } else {
-      // Add new user
-      const id = users.length > 0 ? Math.max(...users.map(user => user.id)) + 1 : 1;
-      setUsers([...users, { 
-        id, 
-        ...newUser, 
-        lastLogin: 'Never'
-      }]);
-      toast.success("User added successfully");
-    }
-    
-    setIsAddEditDialogOpen(false);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewUser({ ...newUser, [name]: value });
-  };
-
-  const handleSelectChange = (name, value) => {
-    setNewUser({ ...newUser, [name]: value });
   };
 
   return (
@@ -280,7 +240,12 @@ const Users = () => {
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                             <span className="text-sm font-medium text-primary">{user.name.charAt(0)}</span>
                           </div>
-                          <span className="font-medium">{user.name}</span>
+                          <button 
+                            className="font-medium hover:underline flex items-center"
+                            onClick={() => handleViewUserDetails(user)}
+                          >
+                            {user.name}
+                          </button>
                         </div>
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
@@ -305,6 +270,10 @@ const Users = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleViewUserDetails(user)}>
+                              <ExternalLink size={14} className="mr-2" />
+                              View Details
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleEditUser(user)}>
                               <Pencil size={14} className="mr-2" />
                               Edit
@@ -349,82 +318,6 @@ const Users = () => {
           </div>
         </CardContent>
       </Card>
-      
-      {/* Add/Edit User Dialog */}
-      <Dialog open={isAddEditDialogOpen} onOpenChange={setIsAddEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
-            <DialogDescription>
-              {editingUser 
-                ? 'Update the user details below'
-                : 'Fill in the information for the new user'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input 
-                id="name"
-                name="name"
-                value={newUser.name}
-                onChange={handleInputChange}
-                placeholder="Enter full name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email"
-                name="email"
-                type="email"
-                value={newUser.email}
-                onChange={handleInputChange}
-                placeholder="Enter email address"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select 
-                value={newUser.role}
-                onValueChange={(value) => handleSelectChange('role', value)}
-              >
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Editor">Editor</SelectItem>
-                  <SelectItem value="Viewer">Viewer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select 
-                value={newUser.status}
-                onValueChange={(value) => handleSelectChange('status', value)}
-              >
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmitUser}>
-              {editingUser ? 'Save Changes' : 'Add User'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
