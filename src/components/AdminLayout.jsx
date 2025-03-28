@@ -4,6 +4,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useSidebar } from './SidebarContext';
+import { authService } from '@/api';
 
 const AdminLayout = () => {
   const { isSidebarOpen, isMobile } = useSidebar();
@@ -13,9 +14,9 @@ const AdminLayout = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulate authentication check
+    // Check authentication status
     const checkAuth = () => {
-      const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+      const isAuth = authService.isAuthenticated();
       setIsAuthenticated(isAuth);
       setIsLoading(false);
       
