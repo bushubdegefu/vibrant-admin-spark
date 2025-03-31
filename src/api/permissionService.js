@@ -65,5 +65,15 @@ export const permissionService = {
   // Get assigned permissions for a group
   getAssignedPermissionsForGroup: (groupId, page = 1, size = 100) => {
     return api.get(`/blue_auth/permissiongroup/${groupId}`, { page, size });
+  },
+  
+  // Add a permission to a group
+  addPermissionToGroup: (groupId, permissionId) => {
+    return api.post(`/blue_auth/grouppermission/${groupId}/${permissionId}`);
+  },
+  
+  // Remove a permission from a group
+  removePermissionFromGroup: (groupId, permissionId) => {
+    return api.delete(`/blue_auth/grouppermission/${groupId}/${permissionId}`);
   }
 };

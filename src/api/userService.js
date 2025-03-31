@@ -58,12 +58,12 @@ export const userService = {
   },
 
   // Add a user to a group
-  addUserToGroup: (groupId, userId) => {
+  addUserToGroup: (userId, groupId) => {
     return api.post(`/blue_auth/groupuser/${groupId}/${userId}`);
   },
 
   // Remove a user from a group
-  removeUserFromGroup: (groupId, userId) => {
+  removeUserFromGroup: (userId, groupId) => {
     return api.delete(`/blue_auth/groupuser/${groupId}/${userId}`);
   }
 };
