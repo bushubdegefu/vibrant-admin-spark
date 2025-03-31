@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   Card, 
   CardContent, 
@@ -35,7 +36,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { 
   Plus, 
   MoreHorizontal, 
@@ -46,57 +46,53 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import { toast } from "sonner";
-
-// Mock groups data
-const groupsData = [
-  { 
-    id: 1, 
-    name: 'Administrators', 
-    userCount: 3,
-    permissions: 24,
-  },
-  { 
-    id: 2, 
-    name: 'Editors', 
-    userCount: 8,
-    permissions: 16,
-  },
-  { 
-    id: 3, 
-    name: 'Viewers', 
-    userCount: 15,
-    permissions: 8,
-  },
-  { 
-    id: 4, 
-    name: 'Content Managers', 
-    userCount: 5,
-    permissions: 12,
-  },
-  { 
-    id: 5, 
-    name: 'Support Team', 
-    userCount: 7,
-    permissions: 10,
-  },
-];
+import { groupService } from '@/api';
 
 const Groups = () => {
-  const [groups, setGroups] = useState(groupsData);
   const [searchValue, setSearchValue] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState(null);
-  const [newGroupName, setNewGroupName] = useState('');
-  const [editingGroup, setEditingGroup] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
-  const filteredGroups = groups.filter(group => 
-    group.name.toLowerCase().includes(searchValue.toLowerCase())
-  );
+  // Fetch groups data with React Query
+  const { 
+    data: groupsResponse, 
+    isLoading, 
+    isError, 
+    error 
+  } = useQuery({
+    queryKey: ['groups', page, pageSize],
+    queryFn: () => groupService.getGroups(page, pageSize)
+  });
+
+  // Delete group mutation
+  const deleteMutation = useMutation({
+    mutationFn: (groupId) => groupService.deleteGroup(groupId),
+    onSuccess: () => {
+      toast.success("Group deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      setIsDeleteDialogOpen(false);
+      setGroupToDelete(null);
+    },
+    onError: (error) => {
+      toast.error("Failed to delete group: " + (error?.message || "Unknown error"));
+      console.error(error);
+    }
+  });
+
+  // Filtered groups based on search
+  const filteredGroups = groupsResponse?.data 
+    ? groupsResponse.data.filter(group => 
+        group.name?.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    : [];
 
   const handleSearchChange = (e) => {
     setSearchValue(e.target.value);
@@ -125,12 +121,14 @@ const Groups = () => {
 
   const handleDeleteConfirm = () => {
     if (groupToDelete) {
-      setGroups(groups.filter(group => group.id !== groupToDelete.id));
-      toast.success("Group deleted successfully");
-      setIsDeleteDialogOpen(false);
-      setGroupToDelete(null);
+      deleteMutation.mutate(groupToDelete.id);
     }
   };
+
+  // If there was an error fetching groups
+  if (isError) {
+    toast.error("Failed to load groups: " + (error?.message || "Unknown error"));
+  }
 
   return (
     <div className="space-y-6">
@@ -172,95 +170,118 @@ const Groups = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Users</TableHead>
-                  <TableHead>Permissions</TableHead>
-                  <TableHead className="w-[80px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredGroups.length > 0 ? (
-                  filteredGroups.map((group) => (
-                    <TableRow key={group.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <Users size={14} className="text-primary" />
-                          </div>
-                          <button 
-                            className="font-medium hover:underline flex items-center"
-                            onClick={() => handleViewGroupDetails(group)}
-                          >
-                            {group.name}
-                          </button>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-normal">
-                          {group.userCount} {group.userCount === 1 ? 'user' : 'users'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="font-normal">
-                          {group.permissions} {group.permissions === 1 ? 'permission' : 'permissions'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal size={16} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleViewGroupDetails(group)}>
-                              <ExternalLink size={14} className="mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditGroup(group)}>
-                              <Pencil size={14} className="mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDeleteClick(group)}
-                              className="text-destructive focus:text-destructive"
+          {isLoading ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 size={24} className="animate-spin mr-2" />
+              <span>Loading groups...</span>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Updated</TableHead>
+                    <TableHead className="w-[80px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredGroups.length > 0 ? (
+                    filteredGroups.map((group) => (
+                      <TableRow key={group.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <Users size={14} className="text-primary" />
+                            </div>
+                            <button 
+                              className="font-medium hover:underline flex items-center"
+                              onClick={() => handleViewGroupDetails(group)}
                             >
-                              <Trash2 size={14} className="mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              {group.name}
+                            </button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {group.created_at ? new Date(group.created_at).toLocaleDateString() : "-"}
+                        </TableCell>
+                        <TableCell>
+                          {group.updated_at ? new Date(group.updated_at).toLocaleDateString() : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal size={16} />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleViewGroupDetails(group)}>
+                                <ExternalLink size={14} className="mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEditGroup(group)}>
+                                <Pencil size={14} className="mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteClick(group)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 size={14} className="mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                        {searchValue ? 'No matching groups found' : 'No groups found'}
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                      No groups found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
           
           {/* Pagination */}
           <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-muted-foreground">
-              Showing <strong>1</strong> to <strong>{filteredGroups.length}</strong> of <strong>{filteredGroups.length}</strong> groups
+              {groupsResponse?.total ? (
+                <>Showing <strong>{(page - 1) * pageSize + 1}</strong> to <strong>{Math.min(page * pageSize, groupsResponse.total)}</strong> of <strong>{groupsResponse.total}</strong> groups</>
+              ) : (
+                'No groups found'
+              )}
             </p>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="icon" disabled>
+              <Button 
+                variant="outline" 
+                size="icon"
+                disabled={page <= 1 || isLoading}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+              >
                 <ChevronLeft size={16} />
               </Button>
-              <Button variant="outline" size="sm" className="bg-primary text-primary-foreground">1</Button>
-              <Button variant="outline" size="icon" disabled>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={page === 1 ? "bg-primary text-primary-foreground" : ""}
+              >
+                {page}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon"
+                disabled={!groupsResponse?.pages || page >= groupsResponse.pages || isLoading}
+                onClick={() => setPage(p => p + 1)}
+              >
                 <ChevronRight size={16} />
               </Button>
             </div>
@@ -281,8 +302,17 @@ const Groups = () => {
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Delete
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteConfirm}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>

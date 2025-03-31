@@ -2,20 +2,26 @@
 import { api } from "./client";
 import { toast } from "sonner";
 
-// For demo purposes, we're mocking login/logout since auth endpoints weren't in the Swagger
 export const authService = {
   login: async (username, password) => {
     try {
-      // In a real implementation, this would call an API endpoint
-      // For now, we'll simulate it with localStorage
-      if (username && password) {
-        // Simulate successful login
+      const response = await api.post("/blue_auth/login", {
+        email: username, // Using email field for username
+        password: password,
+        grant_type: "authorization_code"
+      });
+      
+      if (response && response.data) {
         localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("app-token", "demo-token-value");
+        localStorage.setItem("app-token", response.data.access_token);
+        localStorage.setItem("refresh-token", response.data.refresh_token);
+        
+        // Store basic user info
         localStorage.setItem("user", JSON.stringify({ username }));
+        
         return { success: true };
       } else {
-        throw new Error("Invalid credentials");
+        throw new Error("Invalid response from server");
       }
     } catch (error) {
       toast.error(error.message || "Login failed");
@@ -26,6 +32,7 @@ export const authService = {
   logout: () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("app-token");
+    localStorage.removeItem("refresh-token");
     localStorage.removeItem("user");
     return { success: true };
   },
@@ -37,5 +44,13 @@ export const authService = {
   getCurrentUser: () => {
     const userStr = localStorage.getItem("user");
     return userStr ? JSON.parse(userStr) : null;
+  },
+
+  getToken: () => {
+    return localStorage.getItem("app-token");
+  },
+
+  getRefreshToken: () => {
+    return localStorage.getItem("refresh-token");
   }
 };

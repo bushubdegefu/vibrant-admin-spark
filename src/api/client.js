@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import { authService } from "./authService";
 
 const API_BASE_URL = "http://localhost:7500/api/v1";
 
@@ -10,7 +11,7 @@ const defaultHeaders = {
 
 // Add auth token if available
 const getAuthHeaders = () => {
-  const token = localStorage.getItem("app-token");
+  const token = authService.getToken();
   return token ? { "X-APP-TOKEN": token } : {};
 };
 
@@ -30,14 +31,27 @@ const apiRequest = async (endpoint, options = {}) => {
     };
 
     const response = await fetch(url, config);
-    const data = await response.json();
+    
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    const isJson = contentType && contentType.includes("application/json");
+    
+    const data = isJson ? await response.json() : await response.text();
 
     if (!response.ok) {
-      throw new Error(data.details || "An error occurred");
+      // Handle unauthorized specifically to redirect to login
+      if (response.status === 401) {
+        authService.logout();
+        window.location.href = "/login";
+        throw new Error("Session expired. Please login again.");
+      }
+      
+      throw new Error(isJson ? data.details || "An error occurred" : "An error occurred");
     }
 
     return data;
   } catch (error) {
+    console.error("API Error:", error);
     toast.error(error.message || "Failed to connect to the server");
     throw error;
   }
