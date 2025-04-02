@@ -41,6 +41,11 @@ export const permissionService = {
   getAvailablePermissionsForUser: (userId) => {
     return api.get(`/blue_auth/permissioncomplementuser/${userId}`);
   },
+  
+  // Get permissions for a user already have
+  getAttachedPermissionsForUser: (userId) => {
+    return api.get(`/blue_auth/permissionnoncomplementuser/${userId}`);
+  },
 
   // Get assigned permissions for a user
   getAssignedPermissionsForUser: (userId, page = 1, size = 100) => {

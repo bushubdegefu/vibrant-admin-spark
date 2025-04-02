@@ -18,8 +18,9 @@ export const userService = {
   },
 
   // Update a user
-  updateUser: (userId, userData) => {
-    return api.patch(`/blue_auth/user/${userId}`, userData);
+  updateUser: (data) => {
+    console.log("data", data);
+    return api.patch(`/blue_auth/user/${data?.userId}`, data?.userData);
   },
 
   // Delete a user
@@ -38,13 +39,13 @@ export const userService = {
   },
 
   // Add a permission to a user
-  addPermissionToUser: (userId, permissionId) => {
-    return api.post(`/blue_auth/userpermission/${userId}/${permissionId}`);
+  addPermissionToUser: (data) => {
+    return api.post(`/blue_auth/userpermission/${data?.userId}/${data?.permissionId}`);
   },
 
   // Remove a permission from a user
-  removePermissionFromUser: (userId, permissionId) => {
-    return api.delete(`/blue_auth/userpermission/${userId}/${permissionId}`);
+  removePermissionFromUser: (data) => {
+    return api.delete(`/blue_auth/userpermission/${data?.userId}/${data?.permissionId}`);
   },
 
   // Get user's groups
@@ -56,14 +57,20 @@ export const userService = {
   getAvailableGroupsForUser: (userId) => {
     return api.get(`/blue_auth/groupcomplementuser/${userId}`);
   },
+  
+  // Get groups assigned to a user
+  getAttachedGroupsForUser: (userId) => {
+    return api.get(`/blue_auth/groupnoncomplementuser/${userId}`);
+  },
 
   // Add a user to a group
-  addUserToGroup: (userId, groupId) => {
-    return api.post(`/blue_auth/groupuser/${groupId}/${userId}`);
+  addUserToGroup: (data) => {
+    
+    return api.post(`/blue_auth/groupuser/${data?.groupId}/${data?.userId}`);
   },
 
   // Remove a user from a group
-  removeUserFromGroup: (userId, groupId) => {
-    return api.delete(`/blue_auth/groupuser/${groupId}/${userId}`);
+  removeUserFromGroup: (data) => {
+    return api.delete(`/blue_auth/groupuser/${data?.groupId}/${data?.userId}`);
   }
 };

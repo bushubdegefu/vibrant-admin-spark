@@ -5,7 +5,7 @@ import { useSidebar } from './SidebarContext';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { title: 'Dashboard', path: '/', icon: LayoutDashboard },
+  { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { title: 'Users', path: '/users', icon: Users },
   { title: 'Groups', path: '/groups', icon: ShieldCheck },
   { title: 'Settings', path: '/settings', icon: Settings },
@@ -34,16 +34,7 @@ const Sidebar = () => {
         )}
       >
         <div className="flex flex-col h-full overflow-hidden">
-          {/* Sidebar header */}
-          <div className="flex items-center justify-between p-4">
-            <h2 className="text-lg font-semibold">Django Admin</h2>
-            <button 
-              onClick={toggleSidebar}
-              className="md:hidden p-1 rounded-full hover:bg-secondary"
-            >
-              <ChevronLeft size={18} />
-            </button>
-          </div>
+  
           
           {/* Sidebar navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
