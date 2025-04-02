@@ -65,12 +65,12 @@ const GroupDetail = () => {
     },
     onSuccess: (data) => {
       toast.success(`Group ${isNewGroup ? 'created' : 'updated'} successfully`);
-      if (isNewGroup && data?.data?.id) {
-        // If a new group was created, navigate to its edit page
-        navigate(`/groups/${data.data.id}`);
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      
+      if (isNewGroup) {
+        navigate('/groups');
       } else {
         queryClient.invalidateQueries({ queryKey: ['group', id] });
-        queryClient.invalidateQueries({ queryKey: ['groups'] });
       }
     },
     onError: (error) => {
@@ -219,7 +219,7 @@ const GroupDetail = () => {
   }
 
   const isSaving = saveGroupMutation.isPending;
-  const isLoading = isLoadingGroup || isLoadingPermissions;
+  const isLoading = isLoadingGroup && !isNewGroup;
 
   return (
     <div className="space-y-6">
@@ -234,7 +234,7 @@ const GroupDetail = () => {
             Back to Groups
           </Button>
           <h1 className="text-3xl font-bold tracking-tight">
-            {isNewGroup ? 'Add Group' : 'Edit Group'}
+            {isNewGroup ? 'Create Group' : 'Edit Group'}
           </h1>
         </div>
         
@@ -256,7 +256,7 @@ const GroupDetail = () => {
         </Button>
       </div>
       
-      {isLoading && !isNewGroup ? (
+      {isLoading ? (
         <div className="flex justify-center items-center py-12">
           <Loader2 size={24} className="animate-spin mr-2" />
           <span>Loading group details...</span>
@@ -267,7 +267,7 @@ const GroupDetail = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-xl font-semibold text-primary">
-                {groupData.name || 'New Group'}
+                {isNewGroup ? 'New Group' : groupData.name}
               </CardTitle>
             </CardHeader>
             
@@ -286,112 +286,114 @@ const GroupDetail = () => {
             </CardContent>
           </Card>
           
-          {/* Permissions Card */}
-          <Card>
-            <CardHeader className="py-4 px-6 bg-slate-100 dark:bg-slate-800">
-              <CardTitle className="text-base font-medium">Permissions</CardTitle>
-            </CardHeader>
-            
-            <CardContent className="p-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* Available Permissions */}
-                <div className="space-y-2">
-                  <div className="font-medium pb-1">Available permissions</div>
-                  <div className="relative">
-                    <Input 
-                      placeholder="Filter..." 
-                      value={searchPermissions.available}
-                      onChange={(e) => setSearchPermissions({...searchPermissions, available: e.target.value})}
-                    />
+          {/* Permissions Card - Only show for editing existing groups */}
+          {!isNewGroup && (
+            <Card>
+              <CardHeader className="py-4 px-6 bg-slate-100 dark:bg-slate-800">
+                <CardTitle className="text-base font-medium">Permissions</CardTitle>
+              </CardHeader>
+              
+              <CardContent className="p-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Available Permissions */}
+                  <div className="space-y-2">
+                    <div className="font-medium pb-1">Available permissions</div>
+                    <div className="relative">
+                      <Input 
+                        placeholder="Filter..." 
+                        value={searchPermissions.available}
+                        onChange={(e) => setSearchPermissions({...searchPermissions, available: e.target.value})}
+                      />
+                    </div>
+                    <div className="border rounded-md h-[300px] overflow-y-auto">
+                      <ul className="py-1">
+                        {filteredAvailablePermissions.map((permission) => (
+                          <li 
+                            key={permission.id} 
+                            className="px-3 py-2 hover:bg-muted flex justify-between items-center cursor-pointer"
+                            onClick={() => movePermission(permission, 'to-chosen')}
+                          >
+                            <div>
+                              <div className="text-xs text-muted-foreground">Permission</div>
+                              <div>{permission.codename}</div>
+                            </div>
+                          </li>
+                        ))}
+                        {filteredAvailablePermissions.length === 0 && (
+                          <li className="px-3 py-2 text-muted-foreground italic text-center">
+                            No permissions available
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => moveAllPermissions('to-chosen')}
+                        disabled={filteredAvailablePermissions.length === 0 || addPermissionMutation.isPending}
+                      >
+                        {addPermissionMutation.isPending ? (
+                          <>
+                            <Loader2 size={14} className="mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : 'Choose all'}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="border rounded-md h-[300px] overflow-y-auto">
-                    <ul className="py-1">
-                      {filteredAvailablePermissions.map((permission) => (
-                        <li 
-                          key={permission.id} 
-                          className="px-3 py-2 hover:bg-muted flex justify-between items-center cursor-pointer"
-                          onClick={() => movePermission(permission, 'to-chosen')}
-                        >
-                          <div>
-                            <div className="text-xs text-muted-foreground">Permission</div>
-                            <div>{permission.codename}</div>
-                          </div>
-                        </li>
-                      ))}
-                      {filteredAvailablePermissions.length === 0 && (
-                        <li className="px-3 py-2 text-muted-foreground italic text-center">
-                          No permissions available
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => moveAllPermissions('to-chosen')}
-                      disabled={filteredAvailablePermissions.length === 0 || addPermissionMutation.isPending}
-                    >
-                      {addPermissionMutation.isPending ? (
-                        <>
-                          <Loader2 size={14} className="mr-2 animate-spin" />
-                          Processing...
-                        </>
-                      ) : 'Choose all'}
-                    </Button>
+                  
+                  {/* Chosen Permissions */}
+                  <div className="space-y-2">
+                    <div className="font-medium pb-1">Chosen permissions</div>
+                    <div className="relative">
+                      <Input 
+                        placeholder="Filter..." 
+                        value={searchPermissions.chosen}
+                        onChange={(e) => setSearchPermissions({...searchPermissions, chosen: e.target.value})}
+                      />
+                    </div>
+                    <div className="border rounded-md h-[300px] overflow-y-auto">
+                      <ul className="py-1">
+                        {filteredChosenPermissions.map((permission) => (
+                          <li 
+                            key={permission.id} 
+                            className="px-3 py-2 hover:bg-muted flex justify-between items-center cursor-pointer"
+                            onClick={() => movePermission(permission, 'to-available')}
+                          >
+                            <div>
+                              <div className="text-xs text-muted-foreground">Permission</div>
+                              <div>{permission.codename}</div>
+                            </div>
+                          </li>
+                        ))}
+                        {filteredChosenPermissions.length === 0 && (
+                          <li className="px-3 py-2 text-muted-foreground italic text-center">
+                            No permissions selected
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => moveAllPermissions('to-available')}
+                        disabled={filteredChosenPermissions.length === 0 || removePermissionMutation.isPending}
+                      >
+                        {removePermissionMutation.isPending ? (
+                          <>
+                            <Loader2 size={14} className="mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : 'Remove all'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                
-                {/* Chosen Permissions */}
-                <div className="space-y-2">
-                  <div className="font-medium pb-1">Chosen permissions</div>
-                  <div className="relative">
-                    <Input 
-                      placeholder="Filter..." 
-                      value={searchPermissions.chosen}
-                      onChange={(e) => setSearchPermissions({...searchPermissions, chosen: e.target.value})}
-                    />
-                  </div>
-                  <div className="border rounded-md h-[300px] overflow-y-auto">
-                    <ul className="py-1">
-                      {filteredChosenPermissions.map((permission) => (
-                        <li 
-                          key={permission.id} 
-                          className="px-3 py-2 hover:bg-muted flex justify-between items-center cursor-pointer"
-                          onClick={() => movePermission(permission, 'to-available')}
-                        >
-                          <div>
-                            <div className="text-xs text-muted-foreground">Permission</div>
-                            <div>{permission.codename}</div>
-                          </div>
-                        </li>
-                      ))}
-                      {filteredChosenPermissions.length === 0 && (
-                        <li className="px-3 py-2 text-muted-foreground italic text-center">
-                          No permissions selected
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => moveAllPermissions('to-available')}
-                      disabled={filteredChosenPermissions.length === 0 || removePermissionMutation.isPending}
-                    >
-                      {removePermissionMutation.isPending ? (
-                        <>
-                          <Loader2 size={14} className="mr-2 animate-spin" />
-                          Processing...
-                        </>
-                      ) : 'Remove all'}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
       
@@ -401,39 +403,22 @@ const GroupDetail = () => {
           <ArrowLeft size={16} className="mr-2" />
           Back
         </Button>
-        <div className="space-x-2">
-          <Button 
-            variant="outline"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 size={16} className="mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : 'Save and continue editing'}
-          </Button>
-          <Button 
-            onClick={() => {
-              handleSave();
-              if (!isSaving) navigate('/groups');
-            }}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 size={16} className="mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save size={16} className="mr-2" />
-                Save
-              </>
-            )}
-          </Button>
-        </div>
+        <Button 
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <>
+              <Loader2 size={16} className="mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save size={16} className="mr-2" />
+              Save
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
