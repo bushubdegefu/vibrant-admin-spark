@@ -56,6 +56,7 @@ export const groupService = {
   getAvailablePermissionsForGroup: (groupId) => {
     return api.get(`/blue_auth/permissioncomplementgroup/${groupId}`);
   },
+  
   // Get permissions attached to a group
   getAttachedPermissionsForGroup: (groupId) => {
     return api.get(`/blue_auth/permissionnoncomplementgroup/${groupId}`);

@@ -26,7 +26,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -69,7 +68,8 @@ const Groups = () => {
     error 
   } = useQuery({
     queryKey: ['groups', page, pageSize],
-    queryFn: () => groupService.getGroups(page, pageSize)
+    queryFn: () => groupService.getGroups(page, pageSize),
+    refetchOnWindowFocus: false,
   });
 
   // Delete group mutation
