@@ -94,8 +94,17 @@ const UserDetail = () => {
   // Save/Update user mutation
   const { mutate: saveUser, isPending: isSavingUser } = useMutation({
     mutationFn: (data) => {
+      // For new users, only send the required fields to the API
       if (isNewUser) {
-        return userService.createUser(data);
+        const postableData = {
+          email: data.email,
+          is_active: data.is_active,
+          is_staff: data.is_staff,
+          is_superuser: data.is_superuser,
+          password: data.password,
+          username: data.username
+        };
+        return userService.createUser(postableData);
       } else {
         return userService.updateUser({ userId: id, userData: data });
       }
@@ -104,6 +113,7 @@ const UserDetail = () => {
       toast.success(`User ${isNewUser ? 'created' : 'updated'} successfully`);
       queryClient.invalidateQueries({ queryKey: ['users'] });
       
+      // After successfully creating a new user, navigate to the users list
       if (isNewUser) {
         navigate('/users');
       } else {
@@ -233,6 +243,7 @@ const UserDetail = () => {
       return;
     }
     
+    // Call the mutation to save the user
     saveUser(userData);
   };
 

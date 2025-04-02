@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -59,7 +58,6 @@ const Users = () => {
   const [pageSize, setPageSize] = useState(10);
   const navigate = useNavigate();
   
-  // Fetch users data with React Query
   const { 
     data: usersResponse, 
     isLoading, 
@@ -71,7 +69,6 @@ const Users = () => {
     queryFn: () => userService.getUsers(page, pageSize)
   });
 
-  // Filtered users based on search
   const filteredUsers = usersResponse?.data 
     ? usersResponse.data.filter(user => 
         user.username?.toLowerCase().includes(searchValue.toLowerCase()) ||
@@ -111,7 +108,7 @@ const Users = () => {
       try {
         await userService.deleteUser(userToDelete.id);
         toast.success("User deleted successfully");
-        refetch(); // Refresh the user list
+        refetch();
       } catch (error) {
         toast.error("Failed to delete user");
         console.error(error);
@@ -122,7 +119,6 @@ const Users = () => {
     }
   };
 
-  // If there was an error fetching users
   if (isError) {
     toast.error("Failed to load users: " + (error?.message || "Unknown error"));
   }
@@ -268,7 +264,6 @@ const Users = () => {
             </div>
           )}
           
-          {/* Pagination */}
           <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-muted-foreground">
               {usersResponse?.total ? (
@@ -306,7 +301,6 @@ const Users = () => {
         </CardContent>
       </Card>
       
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
