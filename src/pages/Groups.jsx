@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,7 +8,6 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,9 +32,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
-  Plus, 
   MoreHorizontal, 
   Pencil, 
   Trash2, 
@@ -50,6 +48,7 @@ import {
 } from 'lucide-react';
 import { toast } from "sonner";
 import { groupService } from '@/api';
+import AddGroupPopover from '@/components/AddGroupPopover';
 
 const Groups = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -65,7 +64,8 @@ const Groups = () => {
     data: groupsResponse, 
     isLoading, 
     isError, 
-    error 
+    error,
+    refetch
   } = useQuery({
     queryKey: ['groups', page, pageSize],
     queryFn: () => groupService.getGroups(page, pageSize),
@@ -102,10 +102,6 @@ const Groups = () => {
     setSearchValue('');
   };
 
-  const handleAddGroup = () => {
-    navigate('/groups/new');
-  };
-
   const handleEditGroup = (group) => {
     navigate(`/groups/${group.id}`);
   };
@@ -134,10 +130,7 @@ const Groups = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Groups</h1>
-        <Button onClick={handleAddGroup}>
-          <Plus size={16} className="mr-2" />
-          Add Group
-        </Button>
+        <AddGroupPopover onSuccess={refetch} />
       </div>
       
       <Card>
@@ -251,7 +244,6 @@ const Groups = () => {
             </div>
           )}
           
-          {/* Pagination */}
           <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-muted-foreground">
               {groupsResponse?.total ? (
@@ -289,7 +281,6 @@ const Groups = () => {
         </CardContent>
       </Card>
       
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>

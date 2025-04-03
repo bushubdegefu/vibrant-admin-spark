@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -36,7 +36,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { 
-  Plus, 
   MoreHorizontal, 
   Pencil, 
   Trash2, 
@@ -49,6 +48,7 @@ import {
 } from 'lucide-react';
 import { toast } from "sonner";
 import { userService } from '@/api';
+import AddUserPopover from '@/components/AddUserPopover';
 
 const Users = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -84,10 +84,6 @@ const Users = () => {
 
   const clearSearch = () => {
     setSearchValue('');
-  };
-
-  const handleAddUser = () => {
-    navigate('/users/new');
   };
 
   const handleEditUser = (user) => {
@@ -127,10 +123,7 @@ const Users = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-        <Button onClick={handleAddUser}>
-          <Plus size={16} className="mr-2" />
-          Add User
-        </Button>
+        <AddUserPopover onSuccess={refetch} />
       </div>
       
       <Card>
