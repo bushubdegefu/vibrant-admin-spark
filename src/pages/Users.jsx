@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   Card, 
   CardContent, 
@@ -72,6 +72,7 @@ const Users = () => {
     first_name: '',
     last_name: '',
   });
+  const queryClient = useQueryClient();
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
@@ -108,6 +109,8 @@ const Users = () => {
   // Apply filters from form
   const applyFilters = (data) => {
     setFilters(data);
+    console.log(data)
+    queryClient.invalidateQueries({ queryKey: ['users'] });
     setPage(1); // Reset to first page when applying new filters
   };
 
