@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -6,7 +7,8 @@ import {
   CardContent, 
   CardDescription, 
   CardHeader, 
-  CardTitle 
+  CardTitle,
+  CardFooter
 } from "@/components/ui/card";
 import {
   DropdownMenu,
@@ -32,6 +34,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -44,14 +56,20 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  Loader2
+  Loader2,
+  Filter
 } from 'lucide-react';
 import { toast } from "sonner";
 import { groupService } from '@/api';
 import AddGroupPopover from '@/components/AddGroupPopover';
+import { useForm } from "react-hook-form";
 
 const Groups = () => {
-  const [searchValue, setSearchValue] = useState('');
+  // Filter states
+  const [filters, setFilters] = useState({
+    name: '',
+  });
+  const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState(null);
   const [page, setPage] = useState(1);
@@ -59,7 +77,14 @@ const Groups = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  // Fetch groups data with React Query
+  // Create form for filters
+  const filterForm = useForm({
+    defaultValues: {
+      name: '',
+    }
+  });
+  
+  // Fetch groups data with React Query including filters
   const { 
     data: groupsResponse, 
     isLoading, 
@@ -67,8 +92,12 @@ const Groups = () => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['groups', page, pageSize],
-    queryFn: () => groupService.getGroups(page, pageSize),
+    queryKey: ['groups', page, pageSize, filters],
+    queryFn: () => groupService.getGroups({
+      page,
+      size: pageSize,
+      ...filters
+    }),
     refetchOnWindowFocus: false,
   });
 
@@ -87,19 +116,26 @@ const Groups = () => {
     }
   });
 
-  // Filtered groups based on search
-  const filteredGroups = groupsResponse?.data 
-    ? groupsResponse.data.filter(group => 
-        group.name?.toLowerCase().includes(searchValue.toLowerCase())
-      )
-    : [];
-
-  const handleSearchChange = (e) => {
-    setSearchValue(e.target.value);
+  // Apply filters from form
+  const applyFilters = (data) => {
+    setFilters(data);
+    setPage(1); // Reset to first page when applying new filters
   };
 
-  const clearSearch = () => {
-    setSearchValue('');
+  // Clear all filters
+  const clearFilters = () => {
+    filterForm.reset({
+      name: '',
+    });
+    setFilters({
+      name: '',
+    });
+    setPage(1);
+  };
+
+  // Toggle filter visibility
+  const toggleFilters = () => {
+    setIsFiltersVisible(!isFiltersVisible);
   };
 
   const handleEditGroup = (group) => {
@@ -121,6 +157,28 @@ const Groups = () => {
     }
   };
 
+  // Generate an array of page numbers for pagination
+  const generatePagination = () => {
+    if (!groupsResponse?.pages) return [];
+    
+    const totalPages = groupsResponse.pages;
+    const currentPage = page;
+    
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    
+    if (currentPage <= 3) {
+      return [1, 2, 3, 4, 5, 'ellipsis', totalPages];
+    }
+    
+    if (currentPage >= totalPages - 2) {
+      return [1, 'ellipsis', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    
+    return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+  };
+
   // If there was an error fetching groups
   if (isError) {
     toast.error("Failed to load groups: " + (error?.message || "Unknown error"));
@@ -133,33 +191,67 @@ const Groups = () => {
         <AddGroupPopover onSuccess={refetch} />
       </div>
       
+      {/* Filter Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle>Filters</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={toggleFilters}
+              className="h-8 w-8"
+            >
+              {isFiltersVisible ? <X size={16} /> : <Filter size={16} />}
+            </Button>
+          </div>
+          <CardDescription>
+            Filter groups by name
+          </CardDescription>
+        </CardHeader>
+        
+        {isFiltersVisible && (
+          <CardContent>
+            <Form {...filterForm}>
+              <form onSubmit={filterForm.handleSubmit(applyFilters)} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <FormField
+                    control={filterForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="col-span-full md:col-span-1">
+                        <FormLabel>Group Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Filter by group name" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={clearFilters}
+                  >
+                    Reset
+                  </Button>
+                  <Button type="submit">
+                    Apply Filters
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        )}
+      </Card>
+      
       <Card>
         <CardHeader>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>All Groups</CardTitle>
-              <CardDescription>Manage permission groups and member access</CardDescription>
-            </div>
-            <div className="relative w-full sm:w-64">
-              <Search 
-                size={16} 
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-              />
-              <Input
-                placeholder="Search groups..."
-                className="pl-9 w-full"
-                value={searchValue}
-                onChange={handleSearchChange}
-              />
-              {searchValue && (
-                <button 
-                  onClick={clearSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
+          <div className="flex flex-col gap-2">
+            <CardTitle>All Groups</CardTitle>
+            <CardDescription>Manage permission groups and member access</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -180,8 +272,8 @@ const Groups = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredGroups.length > 0 ? (
-                    filteredGroups.map((group) => (
+                  {groupsResponse?.data?.length > 0 ? (
+                    groupsResponse.data.map((group) => (
                       <TableRow key={group.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -235,7 +327,7 @@ const Groups = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                        {searchValue ? 'No matching groups found' : 'No groups found'}
+                        No groups found
                       </TableCell>
                     </TableRow>
                   )}
@@ -243,8 +335,9 @@ const Groups = () => {
               </Table>
             </div>
           )}
-          
-          <div className="flex items-center justify-between mt-4">
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="flex items-center justify-between w-full">
             <p className="text-sm text-muted-foreground">
               {groupsResponse?.total ? (
                 <>Showing <strong>{(page - 1) * pageSize + 1}</strong> to <strong>{Math.min(page * pageSize, groupsResponse.total)}</strong> of <strong>{groupsResponse.total}</strong> groups</>
@@ -253,32 +346,60 @@ const Groups = () => {
               )}
             </p>
             <div className="flex items-center space-x-2">
-              <Button 
-                variant="outline" 
-                size="icon"
-                disabled={page <= 1 || isLoading}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+              <select
+                className="text-sm border rounded px-2 py-1"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1); // Reset to first page when changing page size
+                }}
               >
-                <ChevronLeft size={16} />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className={page === 1 ? "bg-primary text-primary-foreground" : ""}
-              >
-                {page}
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon"
-                disabled={!groupsResponse?.pages || page >= groupsResponse.pages || isLoading}
-                onClick={() => setPage(p => p + 1)}
-              >
-                <ChevronRight size={16} />
-              </Button>
+                {[5, 10, 25, 50, 100].map(size => (
+                  <option key={size} value={size}>
+                    {size} per page
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-        </CardContent>
+          
+          {groupsResponse?.pages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                
+                {generatePagination().map((pageNum, i) => (
+                  pageNum === 'ellipsis' ? (
+                    <PaginationItem key={`ellipsis-${i}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        isActive={page === pageNum}
+                        onClick={() => setPage(pageNum)}
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                ))}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setPage(p => p < (groupsResponse?.pages || 1) ? p + 1 : p)}
+                    className={page >= (groupsResponse?.pages || 1) ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </CardFooter>
       </Card>
       
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

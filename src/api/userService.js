@@ -2,9 +2,11 @@
 import { api } from "./client";
 
 export const userService = {
-  // Get a paginated list of users
-  getUsers: (page = 1, size = 10) => {
-    return api.get("/blue_auth/user", { page, size });
+  // Get a paginated list of users with optional search filters
+  getUsers: (params = {}) => {
+    // Default page and size if not provided
+    const { page = 1, size = 10 } = params;
+    return api.get("/blue_auth/user", params);
   },
 
   // Get a specific user by ID
@@ -65,7 +67,6 @@ export const userService = {
 
   // Add a user to a group
   addUserToGroup: (data) => {
-    
     return api.post(`/blue_auth/groupuser/${data?.groupId}/${data?.userId}`);
   },
 

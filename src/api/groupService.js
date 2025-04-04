@@ -2,9 +2,11 @@
 import { api } from "./client";
 
 export const groupService = {
-  // Get a paginated list of groups
-  getGroups: (page = 1, size = 10) => {
-    return api.get("/blue_auth/group", { page, size });
+  // Get a paginated list of groups with optional name filter
+  getGroups: (params = {}) => {
+    // Default page and size if not provided
+    const { page = 1, size = 10 } = params;
+    return api.get("/blue_auth/group", params);
   },
 
   // Get a specific group by ID
