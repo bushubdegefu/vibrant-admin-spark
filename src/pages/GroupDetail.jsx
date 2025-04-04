@@ -19,12 +19,13 @@ import {
 } from 'lucide-react';
 import { toast } from "sonner";
 import { groupService, permissionService } from '@/api';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const GroupDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isNewGroup = id === 'new';
+  
   const [groupData, setGroupData] = useState({ name: '' });
   const [searchPermissions, setSearchPermissions] = useState({ available: '', chosen: '' });
   
@@ -35,63 +36,42 @@ const GroupDetail = () => {
     isError: isGroupError,
     error: groupError
   } = useQuery({
-    queryKey: ['group', id],
+    queryKey: ['single_group', id],
     queryFn: () => groupService.getGroupById(id),
-    enabled: !isNewGroup,
+    
   });
 
   // Fetch permissions for existing groups
   const { 
-    data: userComplementPermissions
+    data: groupComplementPermissions
   } = useQuery({
     queryKey: ["group_comp_permissions", id],
-    queryFn: () => groupService.getAvailablePermissionsForGroup(id),
-    enabled: !isNewGroup,
+    queryFn:()=> groupService.getAvailablePermissionsForGroup(id),
   });
 
   const { 
-    data: userPermissions
+    data: groupPermissions
   } = useQuery({
     queryKey: ["group_permissions", id],
-    queryFn: () => groupService.getAttachedPermissionsForGroup(id),
-    enabled: !isNewGroup,
+    queryFn:()=> groupService.getAttachedPermissionsForGroup(id),
   });
 
   // Create/Update group mutation
   const saveGroupMutation = useMutation({
-    mutationFn: (data) => {
-      // For new groups, only send the required fields to the API
-      if (isNewGroup) {
-        const postableData = {
-          name: data.name
-        };
-        return groupService.createGroup(postableData);
-      } else {
-        return groupService.updateGroup(id, data);
-      }
-    },
+    mutationFn: groupService.updateGroup,
     onSuccess: (data) => {
-      toast.success(`Group ${isNewGroup ? 'created' : 'updated'} successfully`);
-      queryClient.invalidateQueries({ queryKey: ['groups'] });
-      
-      // After successfully creating a new group, navigate to the groups list
-      if (isNewGroup) {
-        navigate('/groups');
-      } else {
-        queryClient.invalidateQueries({ queryKey: ['group', id] });
-      }
+      toast.success(`Group ${'updated'} successfully`);
+      queryClient.invalidateQueries({ queryKey: ['single_group'] });
+       
     },
     onError: (error) => {
-      toast.error(`Failed to ${isNewGroup ? 'create' : 'update'} group: ${error.message || 'Unknown error'}`);
+      toast.error(`Failed to update group: ${error.message || 'Unknown error'}`);
     }
   });
-
   // Add permission to group mutation
-  const addPermissionMutation = useMutation({
-    mutationFn: ({ groupId, permissionId }) => 
-      groupService.addPermissionToGroup(groupId, permissionId),
+  const {mutate: addPermissionMutationToGroup} = useMutation({
+    mutationFn: groupService.addPermissionToGroup,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['group', id] });
       queryClient.invalidateQueries({ queryKey: ['group_permissions', id] });
       queryClient.invalidateQueries({ queryKey: ['group_comp_permissions', id] });
     },
@@ -101,11 +81,9 @@ const GroupDetail = () => {
   });
 
   // Remove permission from group mutation
-  const removePermissionMutation = useMutation({
-    mutationFn: ({ groupId, permissionId }) => 
-      groupService.removePermissionFromGroup(groupId, permissionId),
+  const {mutate: removePermissionMutationFromGroup } = useMutation({
+    mutationFn: groupService.removePermissionFromGroup,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['group', id] });
       queryClient.invalidateQueries({ queryKey: ['group_permissions', id] });
       queryClient.invalidateQueries({ queryKey: ['group_comp_permissions', id] });
     },
@@ -116,21 +94,20 @@ const GroupDetail = () => {
 
   // Load group data when available
   useEffect(() => {
-    if (groupDetails?.data && !isNewGroup) {
-      setGroupData({
-        name: groupDetails.data.name || '',
-      });
-    }
-  }, [groupDetails, isNewGroup]);
+      setGroupData({ 
+        name: groupDetails?.data.name,
+      });  
+    
+  }, [groupDetails]);
 
   // Filtered permissions
   const filteredAvailablePermissions =
-    userComplementPermissions?.data?.filter((perm) =>
+    groupComplementPermissions?.data?.filter((perm) =>
       perm.codename.toLowerCase().includes(searchPermissions.available.toLowerCase())
     ) || [];
 
   const filteredChosenPermissions =
-    userPermissions?.data?.filter((perm) =>
+    groupPermissions?.data?.filter((perm) =>
       perm.codename.toLowerCase().includes(searchPermissions.chosen.toLowerCase())
     ) || [];
 
@@ -142,9 +119,9 @@ const GroupDetail = () => {
 
   const movePermission = (permissionId, direction) => {
     if (direction === "add") {
-      addPermissionMutation.mutate({ groupId: id, permissionId });
+      addPermissionMutationToGroup({ groupId: id, permissionId });
     } else {
-      removePermissionMutation.mutate({ groupId: id, permissionId });
+      removePermissionMutationFromGroup({ groupId: id, permissionId });
     }
   };
 
@@ -153,12 +130,12 @@ const GroupDetail = () => {
       toast.error("Group name cannot be empty");
       return;
     }
-    
-    saveGroupMutation.mutate(groupData);
+    console.log("Saving group data:", groupData);
+    saveGroupMutation.mutate({groupId: id, groupData});
   };
 
   const isSaving = saveGroupMutation.isPending;
-  const isLoading = isLoadingGroup && !isNewGroup;
+  const isLoading = isLoadingGroup;
 
   return (
     <div className="space-y-6">
@@ -173,7 +150,7 @@ const GroupDetail = () => {
             Back to Groups
           </Button>
           <h1 className="text-3xl font-bold tracking-tight">
-            {isNewGroup ? 'Create Group' : 'Edit Group'}
+            {'Edit Group'}
           </h1>
         </div>
         
@@ -206,7 +183,7 @@ const GroupDetail = () => {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-xl font-semibold text-primary">
-                {isNewGroup ? 'New Group' : groupData.name}
+                {groupData?.name}
               </CardTitle>
             </CardHeader>
             
@@ -217,7 +194,7 @@ const GroupDetail = () => {
                 <Input 
                   id="name" 
                   name="name"
-                  value={groupData.name}
+                  value={groupData?.name}
                   onChange={handleInputChange}
                   placeholder="Enter group name"
                   required
@@ -230,7 +207,7 @@ const GroupDetail = () => {
           </Card>
           
           {/* Permissions Card - Only show for existing groups */}
-          {!isNewGroup && (
+          
             <Card>
               <CardHeader className="py-4 px-6 bg-slate-100 dark:bg-slate-800">
                 <CardTitle className="text-base font-medium">Permissions</CardTitle>
@@ -251,27 +228,33 @@ const GroupDetail = () => {
                         onChange={(e) => setSearchPermissions({...searchPermissions, available: e.target.value})}
                       />
                     </div>
-                    <div className="border rounded-md h-[300px] overflow-y-auto">
-                      <ul className="py-1">
-                        {filteredAvailablePermissions.map((permission) => (
-                          <li 
-                            key={`add_permission_${permission.id}`} 
-                            className="px-3 py-2 hover:bg-muted flex justify-between items-center cursor-pointer"
-                            onClick={() => movePermission(permission.id, "add")}
-                          >
-                            <div>
-                              <div className="text-xs text-muted-foreground">Permission</div>
-                              <div>{permission.codename}</div>
-                            </div>
-                          </li>
-                        ))}
-                        {filteredAvailablePermissions.length === 0 && (
-                          <li className="px-3 py-2 text-muted-foreground italic text-center">
-                            No permissions available
-                          </li>
-                        )}
-                      </ul>
-                    </div>
+                    <ErrorBoundary>
+                        <div className="border rounded-md h-[300px] overflow-y-auto">
+                          <ul className="py-1">
+                            {filteredAvailablePermissions?.map((permission) => (
+                              <li
+                                key={`perm-${permission.id}`}
+                                className="px-3 py-2 hover:bg-muted flex justify-between items-center cursor-pointer"
+                                onClick={() =>
+                                  movePermission(permission?.id, "add")
+                                }
+                              >
+                                <div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {permission.codename}
+                                  </div>
+                                  <div>{permission.codename}</div>
+                                </div>
+                              </li>
+                            ))}
+                            {filteredAvailablePermissions.length === 0 && (
+                              <li className="px-3 py-2 text-muted-foreground italic text-center">
+                                No permissions available
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      </ErrorBoundary>
                   </div>
                   
                   {/* Chosen Permissions */}
@@ -284,27 +267,33 @@ const GroupDetail = () => {
                         onChange={(e) => setSearchPermissions({...searchPermissions, chosen: e.target.value})}
                       />
                     </div>
-                    <div className="border rounded-md h-[300px] overflow-y-auto">
-                      <ul className="py-1">
-                        {filteredChosenPermissions.map((permission) => (
-                          <li 
-                            key={`remove_permission_${permission.id}`} 
-                            className="px-3 py-2 hover:bg-muted flex justify-between items-center cursor-pointer"
-                            onClick={() => movePermission(permission.id, "remove")}
-                          >
-                            <div>
-                              <div className="text-xs text-muted-foreground">Permission</div>
-                              <div>{permission.codename}</div>
-                            </div>
-                          </li>
-                        ))}
-                        {filteredChosenPermissions.length === 0 && (
-                          <li className="px-3 py-2 text-muted-foreground italic text-center">
-                            No permissions selected
-                          </li>
-                        )}
-                      </ul>
-                    </div>
+                    <ErrorBoundary>
+                        <div className="border rounded-md h-[300px] overflow-y-auto">
+                          <ul className="py-1">
+                            {filteredChosenPermissions?.map((permission) => (
+                              <li
+                                key={`exist-${permission.id}`}
+                                className="px-3 py-2 hover:bg-muted flex justify-between items-center cursor-pointer"
+                                onClick={() =>
+                                  movePermission(permission?.id, "remove")
+                                }
+                              >
+                                <div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {permission.codename}
+                                  </div>
+                                  <div>{permission.codename}</div>
+                                </div>
+                              </li>
+                            ))}
+                            {filteredChosenPermissions.length === 0 && (
+                              <li className="px-3 py-2 text-muted-foreground italic text-center">
+                                No permissions selected
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                    </ErrorBoundary>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-4">
@@ -312,7 +301,7 @@ const GroupDetail = () => {
                 </p>
               </CardContent>
             </Card>
-          )}
+          
         </div>
       )}
       

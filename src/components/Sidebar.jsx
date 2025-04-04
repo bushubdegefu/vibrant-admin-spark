@@ -8,7 +8,7 @@ const navItems = [
   { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { title: 'Users', path: '/users', icon: Users },
   { title: 'Groups', path: '/groups', icon: ShieldCheck },
-  { title: 'Settings', path: '/settings', icon: Settings },
+  // { title: 'Settings', path: '/settings', icon: Settings },
 ];
 
 const Sidebar = () => {

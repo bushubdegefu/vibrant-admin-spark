@@ -166,7 +166,7 @@ const Settings = () => {
             <Globe size={16} />
             <span className="hidden md:inline">General</span>
           </TabsTrigger>
-          <TabsTrigger value="email" className="flex items-center gap-2">
+          {/* <TabsTrigger value="email" className="flex items-center gap-2">
             <Mail size={16} />
             <span className="hidden md:inline">Email</span>
           </TabsTrigger>
@@ -177,7 +177,7 @@ const Settings = () => {
           <TabsTrigger value="security" className="flex items-center gap-2">
             <Lock size={16} />
             <span className="hidden md:inline">Security</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="appearance" className="flex items-center gap-2">
             <Palette size={16} />
             <span className="hidden md:inline">Appearance</span>

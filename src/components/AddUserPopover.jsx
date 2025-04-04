@@ -20,6 +20,8 @@ const AddUserPopover = ({ onSuccess }) => {
     defaultValues: {
       username: "",
       email: "",
+      first_name: "",
+      last_name: "",
       password: "",
       is_active: true,
       is_staff: false,
@@ -46,12 +48,14 @@ const AddUserPopover = ({ onSuccess }) => {
     const postableData = {
       email: data.email,
       username: data.username,
+      first_name: data.first_name,
+      last_name: data.last_name,
       password: data.password,
       is_active: data.is_active,
       is_staff: data.is_staff,
       is_superuser: data.is_superuser,
     };
-    
+    console.log("Submitting user data:", postableData);
     mutate(postableData);
   };
 
@@ -95,6 +99,34 @@ const AddUserPopover = ({ onSuccess }) => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input {...field} type="email" required placeholder="email@example.com" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="first_name"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} required placeholder="Jane" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="last_name"
+                render={({ field }) => (
+                  <FormItem className="space-y-1">
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input {...field}  required placeholder="Doe" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

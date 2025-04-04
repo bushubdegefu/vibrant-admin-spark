@@ -32,7 +32,7 @@ const UserDetail = () => {
     is_active: false,
     is_staff: false,
     is_superuser: false,
-    password: isNewUser ? "" : "default@123",
+    password: "",
     username: ""
   });
   
@@ -221,7 +221,7 @@ const UserDetail = () => {
         is_active: singleUser.data.is_active || false,
         is_staff: singleUser.data.is_staff || false,
         is_superuser: singleUser.data.is_superuser || false,
-        password: "default@123",
+        password: "",
       });
     }
   }, [singleUser, isNewUser]);

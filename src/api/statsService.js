@@ -4,6 +4,6 @@ import { api } from "./client";
 export const statsService = {
   // Get statistics data
   getStats: () => {
-    return api.get("/blue_auth/stat");
+    return api.get("/blue_auth/stats");
   }
 };

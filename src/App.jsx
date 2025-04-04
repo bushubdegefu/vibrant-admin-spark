@@ -41,7 +41,7 @@ const App = () => (
               <Route path="users/:id" element={<UserDetail />} />
               <Route path="groups" element={<Groups />} />
               <Route path="groups/:id" element={<GroupDetail />} />
-              <Route path="settings" element={<Settings />} />
+              {/* <Route path="settings" element={<Settings />} /> */}
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
