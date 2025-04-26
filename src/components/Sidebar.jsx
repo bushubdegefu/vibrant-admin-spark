@@ -5,9 +5,9 @@ import { useSidebar } from './SidebarContext';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { title: 'Users', path: '/users', icon: Users },
-  { title: 'Groups', path: '/groups', icon: ShieldCheck },
+  { title: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+  { title: 'Users', path: '/admin/users', icon: Users },
+  { title: 'Groups', path: '/admin/groups', icon: ShieldCheck },
   // { title: 'Settings', path: '/settings', icon: Settings },
 ];
 

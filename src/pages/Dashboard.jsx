@@ -15,8 +15,8 @@ const Dashboard = () => {
   });
 
   // Card click handlers
-  const handleUsersCardClick = () => navigate('/users');
-  const handleGroupsCardClick = () => navigate('/groups');
+  const handleUsersCardClick = () => navigate('/admin/users');
+  const handleGroupsCardClick = () => navigate('/admin/groups');
 
   if (isLoading) {
     return (
@@ -76,7 +76,7 @@ const Dashboard = () => {
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.active_users}</div>
+            <div className="text-2xl font-bold">{stats.total_users}</div>
             <p className="text-xs text-muted-foreground">
               Currently active user accounts
             </p>

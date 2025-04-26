@@ -109,7 +109,7 @@ const Users = () => {
   // Apply filters from form
   const applyFilters = (data) => {
     setFilters(data);
-    console.log(data)
+    
     queryClient.invalidateQueries({ queryKey: ['users'] });
     setPage(1); // Reset to first page when applying new filters
   };
@@ -141,7 +141,7 @@ const Users = () => {
   };
 
   const handleViewUserDetails = (user) => {
-    navigate(`/users/${user.id}`);
+    navigate(`/admin/users/${user.id}`);
   };
 
   const handleDeleteClick = (user) => {

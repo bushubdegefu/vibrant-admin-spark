@@ -9,9 +9,9 @@ const Index = () => {
   useEffect(() => {
     // Check if user is authenticated, redirect accordingly
     if (authService.isAuthenticated()) {
-      navigate('/users');
+      navigate('/admin/users');
     } else {
-      navigate('/login');
+      navigate('/admin/login');
     }
   }, [navigate]);
 

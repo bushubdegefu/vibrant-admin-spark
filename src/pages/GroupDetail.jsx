@@ -144,7 +144,7 @@ const GroupDetail = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigate('/groups')}
+            onClick={() => navigate('/admin/groups')}
           >
             <ArrowLeft size={16} className="mr-2" />
             Back to Groups
@@ -307,7 +307,7 @@ const GroupDetail = () => {
       
       {/* Bottom Action Buttons */}
       <div className="flex justify-between">
-        <Button variant="outline" onClick={() => navigate('/groups')}>
+        <Button variant="outline" onClick={() => navigate('/admin/groups')}>
           <ArrowLeft size={16} className="mr-2" />
           Back
         </Button>

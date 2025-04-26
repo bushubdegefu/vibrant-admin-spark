@@ -115,7 +115,7 @@ const UserDetail = () => {
       
       // After successfully creating a new user, navigate to the users list
       if (isNewUser) {
-        navigate('/users');
+        navigate('/admin/users');
       } else {
         queryClient.invalidateQueries({ queryKey: ["user_single", id] });
       }
@@ -251,7 +251,7 @@ const UserDetail = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/users")}>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/admin/users")}>
             <ArrowLeft size={16} className="mr-2" />
             Back to Users
           </Button>
@@ -719,7 +719,7 @@ const UserDetail = () => {
 
       {/* Bottom Action Buttons */}
       <div className="flex justify-between">
-        <Button variant="outline" onClick={() => navigate("/users")}>
+        <Button variant="outline" onClick={() => navigate("/admin/users")}>
           <ArrowLeft size={16} className="mr-2" />
           Back
         </Button>

@@ -139,11 +139,11 @@ const Groups = () => {
   };
 
   const handleEditGroup = (group) => {
-    navigate(`/groups/${group.id}`);
+    navigate(`/admin/groups/${group.id}`);
   };
 
   const handleViewGroupDetails = (group) => {
-    navigate(`/groups/${group.id}`);
+    navigate(`/admin/groups/${group.id}`);
   };
 
   const handleDeleteClick = (group) => {

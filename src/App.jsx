@@ -33,14 +33,14 @@ const App = () => (
       <SidebarProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<AdminLayout />}>
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="users" element={<Users />} />
-              <Route path="users/:id" element={<UserDetail />} />
-              <Route path="groups" element={<Groups />} />
-              <Route path="groups/:id" element={<GroupDetail />} />
+            <Route path="/admin/" element={<Index />} />
+            <Route path="/admin/login" element={<Login />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="/admin/dashboard" element={<Dashboard />} />
+              <Route path="/admin/users" element={<Users />} />
+              <Route path="/admin/users/:id" element={<UserDetail />} />
+              <Route path="/admin/groups" element={<Groups />} />
+              <Route path="/admin/groups/:id" element={<GroupDetail />} />
               {/* <Route path="settings" element={<Settings />} /> */}
             </Route>
             <Route path="*" element={<NotFound />} />

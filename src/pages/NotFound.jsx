@@ -23,7 +23,7 @@ const NotFound = () => {
         <p className="text-muted-foreground mt-2 mb-6">
           The page you're looking for doesn't seem to exist.
         </p>
-        <Button onClick={() => navigate("/")} className="gap-2">
+        <Button onClick={() => navigate("/admin/")} className="gap-2">
           <Home size={16} />
           Return to Dashboard
         </Button>

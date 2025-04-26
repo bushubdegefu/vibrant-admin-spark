@@ -30,7 +30,7 @@ const Login = () => {
     try {
       await authService.login(username, password);
       toast.success("Login successful");
-      navigate('/');
+      navigate('/admin/dashboard');
     } catch (error) {
       console.error("Login failed:", error);
       // Toast notification is already shown in the service
